@@ -1,0 +1,127 @@
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import re
+import random
+import os
+import urllib.request
+#把base_url随便改成别的贴吧的吧的首页都行
+base_url = "http://tieba.baidu.com/f?kw=%E8%8B%B1%E8%AF%AD&ie=utf-8&pn=50"
+num=5000
+for i in range(36,50):#爬取50页
+       #这地方写的不对,因该用正则提取后面的pn
+       #下面在加一个判断,是否你贴入的base_url是首页.因为首页后面没有&pn处理不同:
+       a=re.findall(".*&pn",base_url)
+       shumu=50*i
+       print ('正在爬取第'+str(i+1)+'页的所有帖子里面的图片')
+       if a==[]:
+              #那么我们就加入&pn=...
+              url=base_url+'&pn='+str(shumu)
+       else:
+              url=base_url+str(shumu)
+       
+       
+       #把url地址里面的东西读出来给soup
+       try:#用try来解决有时候编码utf-8不好使的问题
+        html = urlopen(url).read().decode('utf-8')
+       except Exception:
+              continue
+       soup = BeautifulSoup(html, features='lxml')
+       #把地址里面的每一个页码地址都取出来
+       #这个正则表达式表示开头必须是/p的,里面有/p后很多数字的,(?=)这个叫断言,利用这个来加限制条件
+       #继续搞一个贪婪匹配和非贪婪匹配的区别 .*?5表示非贪婪匹配   235235会出来2个235    .*5是贪婪匹配235235会出来235235
+       sub_urls = soup.find_all("a", {"target": "_blank", "href": re.compile("(?=^/p)/p/\d*")})
+       
+       
+       for i in range(len(sub_urls)):
+        a=sub_urls[i]['href']#利用这个方式提取一个网址里面的href
+        
+        
+        #这里面每一个a就是要爬取的网页
+        #下面开始爬取他的图片
+        baseurl='https://tieba.baidu.com'
+        url=baseurl+str(a)
+        try:
+         html = urlopen(url).read().decode('utf-8')
+        except Exception:
+              continue
+        soup = BeautifulSoup(html, features='lxml')
+        
+        #soup里面进入标签的方法是.标签就行了所谓标签就是<a>...<\a>这里面东西就是a标签里面的内容
+        
+        tupian=soup.cc
+
+        #继续加一个功能如果需要保存到的dir不存在就生成,存在就pass
+        aaa=os.path.exists('d:/tupian')
+        if aaa!=True:
+               os.makedirs('d:/tupian')
+        #先设置一下保存的位置:
+        dir=r'D:\tupian'
+        
+#这个目录先自己手动创立一下
+        #然后直接find img get src但是有的cc里面没有图片
+        
+        
+        try:
+          if tupian!=None and tupian.find_all('img')!=None:
+                 img_srcall = tupian.find_all('img')
+                 #注意find的话后面可以直接.get  find_all后面不能直接.get
+
+                 
+                 
+                 
+                 
+                 
+                 for _ in img_srcall:
+                 #这个pic_name还必须要写一个拓展名
+                        img_src=_.get('src')
+                        #继续再加个判断只下载有size的图片,这样就跳过了图标文件
+                        a=_.get('size')
+                        #这个get方法真心好用,他的效果是如有有size这个属性我们
+                        #就返回他,否则我们返回None,永远不会报错的.
+                        
+                        if a!=None and int(a)>30000:
+                               pic_name=str(num)
+                               pic_name=pic_name+img_src[-4:]
+                               pic_name=os.path.join(dir,pic_name)
+                               urllib.request.urlretrieve(img_src, pic_name)
+                               
+                               num+=1
+        except Exception:
+              continue
+        
+        
+          
+
+       
+##
+##
+##      
+##his = ["/item/%E9%B8%A1%E7%9F%A2%E8%97%A4/931175?fromtitle=%E9%B8%A1%E5%B1%8E%E8%97%A4&fromid=374872"]
+##
+##for i in range(200):
+## url = base_url + his[-1]
+##
+##print (77777777)
+##
+##html = urlopen(url).read().decode('utf-8')
+##print (8888888888)
+##soup = BeautifulSoup(html, features='lxml')
+##print (9999999)
+##
+##print(i, soup.find('h1').get_text(), ' url: ',base_url+ his[-1])
+##
+### find valid urls
+##sub_urls = soup.find_all("a", {"target": "_blank", "href": re.compile("(?=^/item)/item/(%.{2})+$")})
+##
+##
+##print ('爬到了'+str(i+1))
+##if len(sub_urls) != 0 :
+##
+## his.append(random.sample(sub_urls, 1)[0]['href'])
+##else:
+## if len(his)==1:
+##  pass
+## else:
+### no valid sub link found
+##  his.pop()
